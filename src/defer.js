@@ -12,6 +12,7 @@
  */
 
 (function(global) {
+    var _key = new Date().valueOf();
     var _temp = undefined;
 
     var factory = function(func, key) {
@@ -51,13 +52,13 @@
                 return this;
             }
         }
-        obj.__defer__ = true;
+        // give a unique id
+        obj.__defer__ = _key;
         return obj;
     }
 
     function defer(value) {
-        // let user decide the scope of context
-        return factory(value, typeof value);
+        return factory(value, _key++);
     }
 
     global.defer = defer;
