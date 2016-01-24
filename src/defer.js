@@ -12,11 +12,11 @@
  */
 
 (function(global) {
+    var _key = new Date().valueOf();
     var _temp = undefined;
 
     var factory = function(func, key) {
         var args = [];
-        var context = undefined;
         var obj = function() {
             if (typeof func !== 'function') { return; }
             // if there are arguments input, we push them to the end of args.
@@ -24,18 +24,22 @@
             if (_args.length == 0) {
                 _args = args;
             }
-            var _context = context || this;
+            var _context = this.context || this;
             return func.apply(_context, _args);
         }
         obj.valueOf = function() {
             args.push(_temp);
             _temp = func;
+            if (typeof func === 'function' && this.autorun && func.length == args.length) {
+                var _context = this.context || this;
+                func.apply(_context, args);
+            }
             return func.valueOf();
         }
         obj.toString = function() {
             return func.toString();
         }
-        if (typeof func === 'function') { 
+        if (typeof func === 'function') {
             obj.call = function() {
                 var _args = [].slice.call(arguments);
                 return func.apply(_args.shift(), _args);
@@ -47,17 +51,22 @@
                 return args;
             };
             obj.setContext = function(ctxt) {
-                context = ctxt;
+                this.context = ctxt;
                 return this;
-            }
+            };
+            obj.autorun = false;
+            obj.setAutorun = function(at) {
+                this.autorun = at;
+                return this;
+            };
         }
-        obj.__defer__ = true;
+        // give a unique id
+        obj.__defer__ = _key;
         return obj;
     }
 
     function defer(value) {
-        // let user decide the scope of context
-        return factory(value, typeof value);
+        return factory(value, _key++);
     }
 
     global.defer = defer;
