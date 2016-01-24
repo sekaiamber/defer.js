@@ -24,7 +24,7 @@
         <h2>Case 6: parameter multiplexing</h2>
         <div>Result: <span id="C6_0Result"></span></div>
         <div>Result: <span id="C6_1Result"></span></div>
-        <h2>Case 7: parameter storage</h2>
+        <h2>Case 7: function autorun</h2>
         <div>Result: <span id="C7Result"></span></div>
         <script>
             // case 0.
@@ -90,10 +90,11 @@
             f6_0();
             f6_1();
             // case 7.
-            // var f7 = defer(function(v1, v2) {
-            //     document.getElementById('C7Result').innerHTML = v1 + v2;
-            // });
-            // var p7 = defer('')
+            var f7 = defer(function(v1, v2) {
+                document.getElementById('C7Result').innerHTML = v1 + v2;
+            }).setAutorun(true);
+            defer('Case 7 ') >> f7;
+            defer('called') >> f7;
         </script>
     </body>
 </html>
