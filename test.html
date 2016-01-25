@@ -26,6 +26,8 @@
         <div>Result: <span id="C6_1Result"></span></div>
         <h2>Case 7: function autorun</h2>
         <div>Result: <span id="C7Result"></span></div>
+        <h2>Case 8: multiargs</h2>
+        <div>Result: <span id="C8Result"></span></div>
         <script>
             // case 0.
             var f0 = defer(function(value) {
@@ -95,6 +97,11 @@
             }).setAutorun(true);
             defer('Case 7 ') >> f7;
             defer('called') >> f7;
+            // case 8.
+            var f8 = defer(function(v1, v2) {
+                document.getElementById('C8Result').innerHTML = v1 + v2;
+            }).setAutorun(true);
+            defer('Case 8', 'called') >> f8;
         </script>
     </body>
 </html>

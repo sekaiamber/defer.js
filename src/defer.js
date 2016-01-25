@@ -16,6 +16,9 @@
     var _temp = undefined;
 
     var factory = function(func, key) {
+        if (func && func.__defer__) {
+            return func;
+        }
         var args = [];
         var obj = function() {
             if (typeof func !== 'function') { return; }
@@ -27,11 +30,15 @@
             return func.apply(_context, _args);
         }
         obj.valueOf = function() {
-            args.push(_temp);
-            _temp = func;
-            if (typeof func === 'function' && this.autorun && func.length == args.length) {
+            if (this.multiargs) {
+                _temp = args.concat([func]); 
+            } else {
+                args = args.concat(_temp);
+                _temp = [func];
+            }
+            if (typeof func === 'function' && this.autorun && func.length <= args.length) {
                 var _context = this.context || this;
-                func.apply(_context, args);
+                this.value = func.apply(_context, args);
             }
             return func.valueOf();
         }
@@ -54,18 +61,35 @@
                 this.context = ctxt;
                 return this;
             };
-            obj.autorun = false;
-            obj.setAutorun = function(at) {
-                this.autorun = at;
-                return this;
-            };
         }
-        obj.__defer__ = _key;
+        obj.autorun = false;
+        obj.setAutorun = function(at) {
+            this.autorun = at;
+            return this;
+        };
+        obj.setMultiArgs = function() {
+            args = [].slice.call(arguments);
+            this.multiargs = true;
+            return this;
+        };
+        obj.getArgs = function() {
+            return args;
+        }
+        obj.__defer__ = func;
+        obj.__defer_key__ = key;
         return obj;
     }
 
     function defer(value) {
-        return factory(value, _key++);
+        var _args = [].slice.call(arguments);
+        if (_args.length !== 1) {
+            // console.log(factory(_args.pop(), _key++).setAutorun(false));
+            var ret = factory(_args.pop(), _key++).setAutorun(false);
+            ret.setMultiArgs.apply(ret, _args);
+            return ret;
+        } else {
+            return factory(value, _key++);
+        }
     }
 
     global.defer = defer;
