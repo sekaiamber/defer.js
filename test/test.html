@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta content="text/html; charset=UTF-8" http-equiv="content-type">
+        <title>Test for defer.js</title>
+        <script src="../src/defer.js" type="text/javascript"></script>
+        <script src="jquery-1.11.1.min.js" type="text/javascript"></script>
+        <style>
+        td {border: #aaa solid 1px; padding: .5rem;}
+        .waiting:after {content: 'waiting'; } .waiting {background: yellow;}
+        .success:after {content:'success'; } .success {background: rgb(60, 255, 60);}
+        .fail:after {content:'fail'; } .fail {background: rgb(255, 78, 78);}
+        #detailConsole {position: fixed;top: 100px;background: rgba(255,255,255,.5);border: #000 solid 1px;padding: 1rem;right: 1rem;}
+        </style>
+    </head>
+    <body>
+        <h1>Test</h1>
+        <hr/>
+        <div id="main">
+            <div id="resultContainer">
+                <table id="result">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Detail</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tby">
+                    </tbody>
+                </table>
+            </div>
+            <div id="detailConsole"></div>
+        </div>
+        <script>
+            $(document).ready(function(){
+                // test handler
+                var test = {
+                    cases: [],
+                    idx: 0,
+                    next: function() {
+                        if (this.idx >= this.cases.length) {
+                            return;
+                        }
+                        this.cases[this.idx].test(this.cases[this.idx]);
+                    },
+                    success: function(testcase) {
+                        $('#case-' + testcase.id + ' .status').removeClass('waiting success fail').addClass('success');
+                    },
+                    fail: function(testcase) {
+                        $('#case-' + testcase.id + ' .status').removeClass('waiting success fail').addClass('fail');
+                    },
+                    always: function(testcase) {
+                        this.idx++;
+                    },
+                    addCases: function(cases, i) {
+                        for (i = 0; i < cases.length; i++) {
+                            cases[i]['_assert'] = cases[i]['assert'];
+                            cases[i]['assert'] = function() {
+                                var args = [].slice.call(arguments);
+                                if (this._assert.apply(this, args)) {
+                                    test.success(this);
+                                } else {
+                                    test.fail(this);
+                                }
+                                test.always(this);
+                                test.next();
+                            }
+                        }
+                        this.cases = cases;
+                    }
+                }
+                // test case
+                var testcase = [{
+                    id: 0,
+                    name: 'direct call',
+                    test: function(testcase) {
+                        var f0 = defer(function(value) {
+                            testcase.assert(value);
+                        });
+                        f0('__value__');
+                    },
+                    assert: function(value) {
+                        return value == '__value__';
+                    }
+                }, {
+                    id: 1,
+                    name: 'after 5sec call function',
+                    test: function(testcase) {
+                        var f1 = defer(function(v1, v2) {
+                            testcase.assert(v1, v2);
+                        });
+                        setTimeout(function() {
+                            defer('__value__') >> f1;
+                            defer('__value__') >> f1;
+                            f1();
+                        }, 5000);
+                    },
+                    assert: function(v1, v2) {
+                        return v1 == '__value__' && v2 == '__value__';
+                    }
+                }, {
+                    id: 2,
+                    name: 'call & apply',
+                    test: function(testcase) {
+                        var f2_0 = defer(function(value) {
+                            testcase.assert(this.name, value);
+                        });
+                        var f2_1 = defer(function(value) {
+                            testcase.assert(this.name, value);
+                        });
+                        f2_0.call({name: '__value__'}, '__value__');
+                        f2_1.apply({name: '__value__'}, ['__value__']);
+                    },
+                    assert: function(v1, v2) {
+                        return v1 == '__value__' && v2 == '__value__';
+                    }
+                }, {
+                    id: 3,
+                    name: 'extra arguments',
+                    test: function(testcase) {
+                        var f3 = defer(function(v1, v2) {
+                            testcase.assert(v1, v2);
+                        });
+                        defer('__value__') >> f3;
+                        defer('__value__') >> f3;
+                        defer('__value2__') >> f3;
+                        f3();
+                    },
+                    assert: function(v1, v2) {
+                        return v1 == '__value__' && v2 == '__value__';
+                    }
+                }, {
+                    id: 4,
+                    name: 'function argument',
+                    test: function(testcase) {
+                        var f4 = defer(function(v1, v2) {
+                            testcase.assert(v1(), v2);
+                        });
+                        defer(function() {
+                            return '__value__';
+                        }) >> f4;
+                        defer('__value__') >> f4;
+                        f4();
+                    },
+                    assert: function(v1, v2) {
+                        return v1 == '__value__' && v2 == '__value__';
+                    }
+                }, {
+                    id: 5,
+                    name: 'object\'s function',
+                    test: function(testcase) {
+                        var obj5 = {
+                            name : '__value__',
+                            func : function(value) {
+                                testcase.assert(this.name, value);
+                            }
+                        }
+                        var f5 = defer(obj5.func).setContext(obj5);
+                        defer('__value__') >> f5;
+                        f5();
+                    },
+                    assert: function(v1, v2) {
+                        return v1 == '__value__' && v2 == '__value__';
+                    }
+                }, {
+                    id: 6,
+                    name: 'parameter multiplexing',
+                    test: function(testcase) {
+                        var f6_0 = defer(function(value) {
+                            testcase.assert(value);
+                        });
+                        var f6_1 = defer(function(value) {
+                            testcase.assert(value);
+                        });
+                        var p6 = defer('__value__');
+                        p6 >> f6_0;
+                        p6 >> f6_1;
+                        f6_0();
+                        f6_1();
+                    },
+                    assert: function(value) {
+                        return value == '__value__';
+                    }
+                }, {
+                    id: 7,
+                    name: 'function autorun',
+                    test: function(testcase) {
+                        var f7 = defer(function(v1, v2) {
+                            testcase.assert(v1, v2);
+                        }).setAutorun(true);
+                        defer('__value__') >> f7;
+                        defer('__value__') >> f7;
+                    },
+                    assert: function(v1, v2) {
+                        return v1 == '__value__' && v2 == '__value__';
+                    }
+                }, {
+                    id: 8,
+                    name: 'multiargs',
+                    test: function(testcase) {
+                        var f8 = defer(function(v1, v2) {
+                            testcase.assert(v1, v2);
+                        }).setAutorun(true);
+                        defer('__value__', '__value__') >> f8;
+                    },
+                    assert: function(v1, v2) {
+                        return v1 == '__value__' && v2 == '__value__';
+                    }
+                }];
+                test.addCases(testcase);
+                // table init
+                var $tby = $('#tby');
+                var i = 0;
+                for (; i < testcase.length; i++) {
+                    var c = testcase[i];
+                    var $tr = $('<tr id="case-' + c.id + '"><td>' + c.id + '</td><td>' + c.name + '</td><td class="status waiting"></td><td><input class="test-detail" type="button" value="see test function"/></td></tr>');
+                    $tr.attr('tid', c.id);
+                    (function(fun) {
+                        fun = fun.replace(/                    /g, '');
+                        $('.test-detail', $tr).click(function() {
+                            $('#detailConsole').empty().append('<code><pre>' + fun + '</pre></code>');
+                        });
+                    })(c.test.toString());
+                    $tby.append($tr);
+                }
+                // test start
+                test.next();
+            });
+        </script>
+    </body>
+</html>
