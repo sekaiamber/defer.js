@@ -19,12 +19,11 @@
         var args = [];
         var obj = function() {
             if (typeof func !== 'function') { return; }
-            // if there are arguments input, we push them to the end of args.
             var _args = [].slice.call(arguments);
             if (_args.length == 0) {
                 _args = args;
             }
-            var _context = this.context || this;
+            var _context = obj.context || this;
             return func.apply(_context, _args);
         }
         obj.valueOf = function() {
@@ -50,6 +49,7 @@
             obj.currentArgs = function() {
                 return args;
             };
+            this.context = undefined;
             obj.setContext = function(ctxt) {
                 this.context = ctxt;
                 return this;
@@ -60,7 +60,6 @@
                 return this;
             };
         }
-        // give a unique id
         obj.__defer__ = _key;
         return obj;
     }
