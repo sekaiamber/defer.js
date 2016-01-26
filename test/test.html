@@ -208,6 +208,21 @@
                     assert: function(v1, v2) {
                         return v1 == '__value__' && v2 == '__value__';
                     }
+                }, {
+                    id: 9,
+                    name: 'clear stored arguments',
+                    test: function(testcase) {
+                        var f9 = defer(function(v1, v2) {
+                            testcase.assert(v1, v2);
+                        });
+                        defer('__not__', '__not__') >> f9;
+                        defer(f9);
+                        defer('__value__', '__value__') >> f9;
+                        f9();
+                    },
+                    assert: function(v1, v2) {
+                        return v1 == '__value__' && v2 == '__value__';
+                    }
                 }];
                 test.addCases(testcase);
                 // table init
