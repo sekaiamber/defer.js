@@ -113,6 +113,59 @@ sum(); // 2
 arg1 >> sub;
 sub(); // 0
 ```
+Let's see a more real example, some code may like this:
+```javascript
+var step1 = function(fx) {
+    var start = 1;
+    fx(start);
+};
+var step2 = function(prep, fx) {
+    var next = prep + 1;
+    fx(next);
+};
+var step3 = function(prep, fx) {
+    var next = prep + 1;
+    fx(next);
+};
+var step4 = function(prep, fx) {
+    var next = prep + 1;
+    fx(next);
+};
+step1(function (value1) {
+    value1 *= 2;
+    step2(value1, function(value2) {
+        value2 *= 2;
+        step3(value2, function(value3) {
+            value3 *= 2;
+            step4(value3, function(value4) {
+                console.log(value4);  // 15
+            });
+        });
+    });
+});
+```
+Too many `function` and `})` comfused a lot. So we use `defer`:
+```javascript
+var do = function(value4) {
+    console.log(value4);
+};
+var step1 = function(fx) {
+    var start = 1;
+    defer(start) >> fx;
+};
+var step2 = function(prep, fx) {
+    var next = prep + 1;
+    defer(next) >> fx;
+};
+var step3 = function(prep, fx) {
+    var next = prep + 1;
+    defer(next) >> fx;
+};
+var step4 = function(prep, fx) {
+    var next = prep + 1;
+    defer(next) >> fx;
+};
+```
 
 ## LICENSE
 
