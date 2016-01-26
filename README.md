@@ -28,7 +28,7 @@ sum.call(this, 1, 2); // 3
 sum.apply(this, [1, 2]); // 3
 sum.toString(); // source of the original sum()
 ```
-**Note**: `defer()` function does not change the prototype of `function` or other types. Actually, it modify the `toString(), call(), apply()...` of the return function.
+**Note**: `defer()` function does not change the prototype of `function` or other types.
 
 When function is packaged with `defer`, there are something changed, we can use `>>` operator to pass the argument to the function, and it can store the argument temporarily, and then you can call the function itself at any time:
 ```javascript
@@ -64,7 +64,54 @@ sum(1, 3) // 4
 sum = defer(sum);
 
 defer(1) >> sum;
-sum(); // 3
+sum(); // 3, the same with sum(1)
+
+// clear the stored arguments
+defer(sum);
+// use defer(arg1, arg2, ..) to pass
+// more than one arguments to the function
+defer(1, 3) >> sum;
+sum(); // 4, the same with sum(1, 3)  
+```
+Also, `defer` support autorun a function when the stored arguments fit the length of the list of arguments which the function needed:
+```javascript
+var sum = defer(function(a, b) {
+    console.log(a + b);
+    return a + b;
+}).setAutorun(true); // set the function to autorun
+
+defer(1) >> sum; // nothing happen.
+defer(2) >> sum; // call sum(), console.log(3)
+
+var return_value = sum.value; // 3
+```
+What's more, `defer` can invoke a function and specifying the context for `this`:
+```javascript
+var sum = defer(function() {
+    console.log(this.a + this.b);
+});
+
+var obj1 = { a: 1, b: 2 }
+var obj2 = { a: 2, b: 3 }
+
+sum.setContext(obj1)(); // 3 
+sum.setContext(obj2)(); // 5
+```
+And a `defer` argument can be use in more than one functions:
+```javascript
+var sum = defer(function(a) {
+    console.log(a + 1);
+});
+var sub = defer(function(a) {
+    console.log(a - 1);
+});
+var arg1 = defer(1);
+
+arg1 >> sum;
+sum(); // 2
+
+arg1 >> sub;
+sub(); // 0
 ```
 
 ## LICENSE
