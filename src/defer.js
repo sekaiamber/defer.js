@@ -20,6 +20,7 @@
     var factory = function(func, key) {
         // defer(a) and defer(defer(a)) have same return
         if (func && func.__defer__) {
+            func.clearArgs();
             return func;
         }
         // using closure to hide the arguments
@@ -73,6 +74,9 @@
                 this.context = ctxt;
                 return this;
             };
+        }
+        obj.clearArgs = function() {
+            args = [];
         }
         obj.autorun = false;
         obj.setAutorun = function(at) {
