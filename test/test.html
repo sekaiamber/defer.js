@@ -223,6 +223,46 @@
                     assert: function(v1, v2) {
                         return v1 == '__value__' && v2 == '__value__';
                     }
+                }, {
+                    id: 10,
+                    name: 'defer in defer',
+                    test: function(testcase) {
+                        var f10_1 = defer(function(fx) {
+                            var start = '__';
+                            fx(start);
+                        }).setAutorun(true);
+                        var f10_2 = defer(function(prep, fx) {
+                            var next = prep + 'a';
+                            fx(next);
+                        }).setAutorun(true);
+                        var f10_3 = defer(function(prep, fx) {
+                            var next = prep + 'u';
+                            fx(next);
+                        }).setAutorun(true);
+                        var f10_4 = defer(function(prep, fx) {
+                            var next = prep + '__';
+                            fx(next);
+                        }).setAutorun(true);
+                        
+                        defer(function(value1) {
+                            value1 += 'v';
+                            defer(value1) >> f10_2;
+                        }) >> f10_1;
+                        defer(function(value2) {
+                            value2 += 'l';
+                            defer(value2) >> f10_3;
+                        }) >> f10_2;
+                        defer(function(value3) {
+                            value3 += 'e';
+                            defer(value3) >> f10_4;
+                        }) >> f10_3;
+                        defer(function(value4) {
+                            testcase.assert(value4);
+                        }) >> f10_4;
+                    },
+                    assert: function(value) {
+                        return value == '__value__';
+                    }
                 }];
                 test.addCases(testcase);
                 // table init
