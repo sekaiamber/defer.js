@@ -189,7 +189,7 @@ defer(function(value4) {
     console.log(value4); // 15
 }) >> step4;
 ```
-You can see, use `defer` can flatten the "[Pyramid of Doom](http://calculist.org/blog/2011/12/14/why-coroutines-wont-work-on-the-web/)"
+You can see, use `defer` can flatten the "[Pyramid of Doom](http://calculist.org/blog/2011/12/14/why-coroutines-wont-work-on-the-web/)".
 
 ## LICENSE
 
