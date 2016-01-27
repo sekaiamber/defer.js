@@ -10,7 +10,7 @@
         .waiting:after {content: 'waiting'; } .waiting {background: yellow;}
         .success:after {content:'success'; } .success {background: rgb(60, 255, 60);}
         .fail:after {content:'fail'; } .fail {background: rgb(255, 78, 78);}
-        #detailConsole {position: fixed;top: 100px;background: rgba(255,255,255,.5);border: #000 solid 1px;padding: 1rem;right: 1rem;}
+        #detailConsole {position: fixed;top: 100px;background: rgba(255,255,255,.5);border: #000 solid 1px;padding: 1rem;right: 1rem;max-height: 500px;overflow: auto;}
         </style>
     </head>
     <body>
@@ -207,6 +207,58 @@
                     },
                     assert: function(v1, v2) {
                         return v1 == '__value__' && v2 == '__value__';
+                    }
+                }, {
+                    id: 8,
+                    name: 'multiargs',
+                    test: function(testcase) {
+                        var f8 = defer(function(v1, v2) {
+                            testcase.assert(v1, v2);
+                        }).setAutorun(true);
+                        defer('__value__', '__value__') >> f8;
+                    },
+                    assert: function(v1, v2) {
+                        return v1 == '__value__' && v2 == '__value__';
+                    }
+                }, {
+                    id: 9,
+                    name: 'defer in defer',
+                    test: function(testcase) {
+                        var f9_1 = defer(function(fx) {
+                            var start = '__';
+                            fx(start);
+                        }).setAutorun(true);
+                        var f9_2 = defer(function(prep, fx) {
+                            var next = prep + 'a';
+                            fx(next);
+                        }).setAutorun(true);
+                        var f9_3 = defer(function(prep, fx) {
+                            var next = prep + 'u';
+                            fx(next);
+                        }).setAutorun(true);
+                        var f9_4 = defer(function(prep, fx) {
+                            var next = prep + '__';
+                            fx(next);
+                        }).setAutorun(true);
+                        
+                        defer(function(value1) {
+                            value1 += 'v';
+                            defer(value1) >> f9_2;
+                        }) >> f9_1;
+                        defer(function(value2) {
+                            value2 += 'l';
+                            defer(value2) >> f9_3;
+                        }) >> f9_2;
+                        defer(function(value3) {
+                            value3 += 'e';
+                            defer(value3) >> f9_4;
+                        }) >> f9_3;
+                        defer(function(value4) {
+                            testcase.assert(value4);
+                        }) >> f9_4;
+                    },
+                    assert: function(value) {
+                        return value == '__value__';
                     }
                 }];
                 test.addCases(testcase);

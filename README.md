@@ -113,7 +113,7 @@ sum(); // 2
 arg1 >> sub;
 sub(); // 0
 ```
-Let's see a more real example, some code may like this:
+Let's see how `defer` help to solve the 'callback hell' problem. A real example, some code may like this:
 ```javascript
 var step1 = function(fx) {
     var start = 1;
@@ -146,26 +146,50 @@ step1(function (value1) {
 ```
 Too many `function` and `})` comfused a lot. So we use `defer`:
 ```javascript
-var do = function(value4) {
-    console.log(value4);
-};
+// the same with previous code
 var step1 = function(fx) {
     var start = 1;
-    defer(start) >> fx;
+    fx(start);
 };
 var step2 = function(prep, fx) {
     var next = prep + 1;
-    defer(next) >> fx;
+    fx(next);
 };
 var step3 = function(prep, fx) {
     var next = prep + 1;
-    defer(next) >> fx;
+    fx(next);
 };
 var step4 = function(prep, fx) {
     var next = prep + 1;
-    defer(next) >> fx;
+    fx(next);
 };
+
+// package each function, and switch them to autorun.
+step1 = defer(step1).setAutorun(true);
+step2 = defer(step2).setAutorun(true);
+step3 = defer(step3).setAutorun(true);
+step4 = defer(step4).setAutorun(true);
+
+// step1 run automatically, because it only need one argument
+defer(function(value1) {
+    value1 *= 2;
+    // pass the 1st argument to step2, and waiting for the 2nd argument
+    defer(value1) >> step2;
+}) >> step1;
+// pass the 2nd arg to step2, and step2 run automatically
+defer(function(value2) {
+    value2 *= 2;
+    defer(value2) >> step3;
+}) >> step2;
+defer(function(value3) {
+    value3 *= 2;
+    defer(value3) >> step4;
+}) >> step3;
+defer(function(value4) {
+    console.log(value4); // 15
+}) >> step4;
 ```
+You can see, use `defer` can flatten the "[Pyramid of Doom](http://calculist.org/blog/2011/12/14/why-coroutines-wont-work-on-the-web/)"
 
 ## LICENSE
 
